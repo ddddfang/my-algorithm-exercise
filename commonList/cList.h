@@ -1,15 +1,15 @@
 #ifndef _COMMON_LIST_H
 #define _COMMON_LIST_H
 
-#include "zx_list.h"
+#include "list.h"
 
 typedef struct clistManager{
-	struct zxlist_node listNode;
+	struct list_node listNode;
 	unsigned int u32ListSize;
 } *clist;
 
 typedef struct {
-	struct zxlist_node listNode;
+	struct list_node listNode;
 	void *data;
 } clistNode;
 

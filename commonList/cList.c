@@ -15,7 +15,7 @@ clist List_push(clist list, void *x)
 		listTmp = (clist)malloc(sizeof(struct clistManager));
 		if(!listTmp)
 			goto FAIL_1;
-		ZX_ListInit(&listTmp->listNode);
+		ListInit(&listTmp->listNode);
 		listTmp->u32ListSize = 0;
 		flag = 1;
 	}
@@ -26,11 +26,11 @@ clist List_push(clist list, void *x)
 	pNodeTmp = (clistNode *)malloc(sizeof(clistNode));
 	if(!pNodeTmp)
 		goto FAIL_2;
-	ZX_ListInit(&pNodeTmp->listNode);
+	ListInit(&pNodeTmp->listNode);
 	pNodeTmp->data = x;
 
 	//add list node to clist manager(header)
-	ZX_ListAddHead(&listTmp->listNode, &pNodeTmp->listNode);
+	ListAddHead(&listTmp->listNode, &pNodeTmp->listNode);
 	listTmp->u32ListSize++;
 	return listTmp;
 
@@ -49,13 +49,13 @@ clist List_list(void *x, ...)
 
 	clist listTmp = NULL;
 	clistNode *pNodeTmp = NULL;
-	struct zxlist_node *plistNode = NULL;
+	struct list_node *plistNode = NULL;
 
 	//new malloc a list manager node and init
 	listTmp = (clist)malloc(sizeof(struct clistManager));
 	if(!listTmp)
 		goto FAIL_1;
-	ZX_ListInit(&listTmp->listNode);
+	ListInit(&listTmp->listNode);
 	listTmp->u32ListSize = 0;
 
 	for ( ; x; x = va_arg(ap, void *))
@@ -64,10 +64,10 @@ clist List_list(void *x, ...)
 		pNodeTmp = (clistNode *)malloc(sizeof(clistNode));
 		if(!pNodeTmp)	// TODO: this may cause memleak
 			goto FAIL_2;
-		ZX_ListInit(&pNodeTmp->listNode);
+		ListInit(&pNodeTmp->listNode);
 		pNodeTmp->data = x;
 
-		ZX_ListAddTail(&listTmp->listNode, &pNodeTmp->listNode);
+		ListAddTail(&listTmp->listNode, &pNodeTmp->listNode);
 		listTmp->u32ListSize++;
 	}
 	va_end(ap);
@@ -86,7 +86,7 @@ clist List_append(clist list, clist tail)
 
 	if(tail)
 	{
-		ZX_ListAppend(&list->listNode, &tail->listNode);
+		ListAppend(&list->listNode, &tail->listNode);
 		list->u32ListSize += tail->u32ListSize;
 		tail->u32ListSize = 0;
 	}
@@ -105,21 +105,21 @@ clist List_copy(clist list)
 		listTmp = (clist)malloc(sizeof(struct clistManager));
 		if(!listTmp)
 			goto FAIL_1;
-		ZX_ListInit(&listTmp->listNode);
+		ListInit(&listTmp->listNode);
 		listTmp->u32ListSize = 0;
 
-		struct zxlist_node *plistNode = NULL;
-		ZX_ListForEach(plistNode,&list->listNode)
+		struct list_node *plistNode = NULL;
+		ListForEach(plistNode,&list->listNode)
 		{
-			pNodeTmpSrc = ZX_ListNodeToItem(plistNode, clistNode, listNode);
+			pNodeTmpSrc = ListNodeToItem(plistNode, clistNode, listNode);
 			//new list node and init
 			pNodeTmpDst = (clistNode *)malloc(sizeof(clistNode));
 			if(!pNodeTmpDst)
 				goto FAIL_2;
-			ZX_ListInit(&pNodeTmpDst->listNode);
+			ListInit(&pNodeTmpDst->listNode);
 			pNodeTmpDst->data = pNodeTmpSrc->data;
 			//insert
-			ZX_ListAddTail(&listTmp->listNode, &pNodeTmpDst->listNode);
+			ListAddTail(&listTmp->listNode, &pNodeTmpDst->listNode);
 			listTmp->u32ListSize++;
 		}
 	}
@@ -133,15 +133,15 @@ FAIL_1:
 
 clist List_pop(clist list, void **x)
 {
-	struct zxlist_node *plistNode = NULL;
+	struct list_node *plistNode = NULL;
 	clistNode *pNodeTmp = NULL;
-	if (list && !ZX_ListEmpty(&list->listNode))
+	if (list && !ListIsEmpty(&list->listNode))
 	{
-		plistNode = ZX_ListHead(&list->listNode);
-		pNodeTmp = ZX_ListNodeToItem(plistNode, clistNode, listNode);
+		plistNode = ListHead(&list->listNode);
+		pNodeTmp = ListNodeToItem(plistNode, clistNode, listNode);
 		if (x)
 			*x = pNodeTmp->data;
-		ZX_ListRemove(plistNode);
+		ListRemove(plistNode);
 		free(pNodeTmp);
 		list->u32ListSize--;
 	}
@@ -152,7 +152,7 @@ clist List_pop(clist list, void **x)
 clist List_reverse(clist list)
 {
 	if(list)
-		ZX_ListReverse(&list->listNode);
+		ListReverse(&list->listNode);
 	return list;
 }
 
@@ -166,7 +166,7 @@ int List_length(clist list)
 
 void List_free(clist *plist)
 {
-	struct zxlist_node *plistNode = NULL;
+	struct list_node *plistNode = NULL;
 	clistNode *pNodeTmp = NULL;
 	clist list = NULL;
 	if (plist)
@@ -174,11 +174,11 @@ void List_free(clist *plist)
 		list = *plist;
 		if(list)
 		{
-			while(!ZX_ListEmpty(&list->listNode))
+			while(!ListIsEmpty(&list->listNode))
 			{
-				plistNode = ZX_ListHead(&list->listNode);
-				pNodeTmp = ZX_ListNodeToItem(plistNode, clistNode, listNode);
-				ZX_ListRemove(plistNode);
+				plistNode = ListHead(&list->listNode);
+				pNodeTmp = ListNodeToItem(plistNode, clistNode, listNode);
+				ListRemove(plistNode);
 				free(pNodeTmp);
 				list->u32ListSize--;	
 			}
@@ -190,15 +190,15 @@ void List_free(clist *plist)
 
 void List_map(clist list, void apply(void **x,int index, void *cl), void *cl)
 {
-	struct zxlist_node *plistNode = NULL;
+	struct list_node *plistNode = NULL;
 	clistNode *pNodeTmp = NULL;
 	int i=0;
 	if(apply && list)
 	{
-		ZX_ListForEach(plistNode,&list->listNode)
+		ListForEach(plistNode,&list->listNode)
 		{
 			//apply 使用的是指向 first 的指针,因此可能改变 first 指针的指向
-			pNodeTmp = ZX_ListNodeToItem(plistNode, clistNode, listNode);
+			pNodeTmp = ListNodeToItem(plistNode, clistNode, listNode);
 			apply(&pNodeTmp->data,i++,cl);	//
 		}
 	}
@@ -207,7 +207,7 @@ void List_map(clist list, void apply(void **x,int index, void *cl), void *cl)
 void **List_toArray(clist list, void *end)
 {
 	int i=0, n;
-	struct zxlist_node *plistNode = NULL;
+	struct list_node *plistNode = NULL;
 	clistNode *pNodeTmp = NULL;
 	void **array = NULL;
 	if(list)
@@ -216,9 +216,9 @@ void **List_toArray(clist list, void *end)
 		array = (void **)malloc((n + 1)*sizeof (void *));
 		if(!array)
 			return NULL;
-		ZX_ListForEach(plistNode,&list->listNode)
+		ListForEach(plistNode,&list->listNode)
 		{
-			pNodeTmp = ZX_ListNodeToItem(plistNode, clistNode, listNode);
+			pNodeTmp = ListNodeToItem(plistNode, clistNode, listNode);
 			array[i++] = pNodeTmp->data;
 		}
 		array[i] = end;	
