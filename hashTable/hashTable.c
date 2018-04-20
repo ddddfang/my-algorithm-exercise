@@ -1,3 +1,7 @@
+//rehash_index 表示 rehash到的index,为-1表示没有在做rehash或者rehash完成
+//当正在rehash的时候,搜索、插入、删除需要tb0和tb1都要查看,
+//当rehash_index>=tb0.size的时候表示rehash已经完成,此时应该
+//释放tb0,使用tb1代替tb0,并 rehash_index=-1
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

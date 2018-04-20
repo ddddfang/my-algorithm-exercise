@@ -22,7 +22,7 @@ typedef struct
 	unsigned int size1;		//size = 2^i
 	htItem** tb0;
 	htItem** tb1;
-	int rehash_index;
+	int rehash_index;	//非-1表示正在做rehash
 } htManager;
 
 typedef struct
